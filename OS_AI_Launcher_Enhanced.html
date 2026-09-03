@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OS AI - VM Launcher (Enhanced)</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #1e1e2e 0%, #2d2d44 100%);
+            color: #e6eef6;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+            font-size: 2rem;
+        }
+
+        .subtitle {
+            color: #9fb4d5;
+            margin-bottom: 30px;
+            font-size: 0.95rem;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #3d3d5c;
+        }
+
+        .tab-btn {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            color: #9fb4d5;
+            cursor: pointer;
+            font-size: 0.95rem;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            color: #58a6ff;
+            border-bottom-color: #58a6ff;
+        }
+
+        .tab-btn:hover {
+            color: #c9d1d9;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .section {
+            background: #111318;
+            border-radius: 8px;
+            padding: 24px;
+            margin-bottom: 20px;
+            border: 1px solid #3d3d5c;
+        }
+
+        .section h2 {
+            font-size: 1.3rem;
+            margin-bottom: 16px;
+            color: #58a6ff;
+        }
+
+        .vm-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .vm-card {
+            background: #1c1c28;
+            border: 1px solid #3d3d5c;
+            border-radius: 6px;
+            padding: 16px;
+            transition: all 0.2s;
+        }
+
+        .vm-card:hover {
+            border-color: #58a6ff;
+            background: #222230;
+        }
+
+        .vm-card h3 {
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+
+        .vm-info {
+            font-size: 0.85rem;
+            color: #9fb4d5;
+            margin-bottom: 12px;
+            line-height: 1.6;
+        }
+
+        .vm-status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+
+        .status-running {
+            background: #238636;
+            color: #fff;
+        }
+
+        .status-stopped {
+            background: #da3633;
+            color: #fff;
+        }
+
+        .vm-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        button {
+            flex: 1;
+            padding: 8px 12px;
+            background: #238636;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #2ea043;
+        }
+
+        button.danger {
+            background: #da3633;
+        }
+
+        button.danger:hover {
+            background: #f85149;
+        }
+
+        button.secondary {
+            background: #3d444d;
+        }
+
+        button.secondary:hover {
+            background: #444c56;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            background: #0d1117;
+            border: 1px solid #3d3d5c;
+            border-radius: 4px;
+            color: #e6eef6;
+            font-family: inherit;
+            font-size: 0.9rem;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #58a6ff;
+            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 20px;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 4px;
+            margin-bottom: 16px;
+            font-size: 0.9rem;
+        }
+
+        .alert-info {
+            background: #0550ae;
+            color: #79c0ff;
+            border: 1px solid #388bfd;
+        }
+
+        .alert-success {
+            background: #033a16;
+            color: #3fb950;
+            border: 1px solid #238636;
+        }
+
+        .alert-error {
+            background: #5a1a1a;
+            color: #f85149;
+            border: 1px solid #da3633;
+        }
+
+        .code-block {
+            background: #0d1117;
+            border: 1px solid #3d3d5c;
+            border-radius: 4px;
+            padding: 12px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 0.85rem;
+            overflow-x: auto;
+            margin: 12px 0;
+            color: #79c0ff;
+        }
+
+        .instructions {
+            line-height: 1.8;
+            color: #c9d1d9;
+        }
+
+        .instructions ol {
+            margin-left: 20px;
+            margin-bottom: 16px;
+        }
+
+        .instructions li {
+            margin-bottom: 12px;
+        }
+
+        .instructions strong {
+            color: #58a6ff;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #9fb4d5;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🖥️ OS AI - VM Launcher</h1>
+    <p class="subtitle">Manage and connect to remote desktops via noVNC</p>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('vms')">My VMs</button>
+        <button class="tab-btn" onclick="switchTab('add')">Add VM</button>
+        <button class="tab-btn" onclick="switchTab('setup')">Setup Guide</button>
+    </div>
+
+    <!-- VMs Tab -->
+    <div id="vms" class="tab-content active">
+        <div class="section">
+            <h2>Saved Virtual Machines</h2>
+            <div id="vmList" class="vm-grid"></div>
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <div class="empty-state-icon">📭</div>
+                <p>No VMs saved yet. <a href="#" onclick="switchTab('add'); return false;" style="color: #58a6ff;">Add your first VM →</a></p>
+            </div>
+        </div>
+        <div class="section">
+            <h2>Quick Actions</h2>
+            <button onclick="loadSampleVMs()">Load Sample VMs</button>
+            <button class="danger" style="margin-top: 8px;" onclick="clearAllVMs()">Clear All VMs</button>
+        </div>
+    </div>
+
+    <!-- Add VM Tab -->
+    <div id="add" class="tab-content">
+        <div class="section">
+            <h2>Add New Virtual Machine</h2>
+            
+            <div class="form-group">
+                <label>VM Name</label>
+                <input type="text" id="vmName" placeholder="e.g., Ubuntu Desktop, Windows 11">
+            </div>
+
+            <div class="form-group">
+                <label>Operating System</label>
+                <select id="vmOS">
+                    <option value="linux">Linux</option>
+                    <option value="windows">Windows</option>
+                    <option value="macos">macOS</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>WebSocket URL (noVNC)</label>
+                <input type="text" id="vmWebSocket" placeholder="e.g., ws://192.168.1.100:6080/">
+            </div>
+
+            <div class="form-group">
+                <label>VNC Password (optional)</label>
+                <input type="password" id="vmPassword" placeholder="Leave blank if no password">
+            </div>
+
+            <div class="form-group">
+                <label>RAM</label>
+                <input type="text" id="vmRAM" placeholder="e.g., 4 GB">
+            </div>
+
+            <div class="form-group">
+                <label>Storage</label>
+                <input type="text" id="vmStorage" placeholder="e.g., 50 GB">
+            </div>
+
+            <div class="form-group">
+                <label>CPU Cores</label>
+                <input type="text" id="vmCPU" placeholder="e.g., 2">
+            </div>
+
+            <div class="button-group">
+                <button onclick="saveNewVM()">Save VM</button>
+                <button class="secondary" onclick="clearForm()">Clear</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Setup Guide Tab -->
+    <div id="setup" class="tab-content">
+        <div class="section">
+            <h2>🚀 How to Set Up Your Remote Desktop</h2>
+            
+            <div class="alert alert-info">
+                <strong>What you need:</strong> A Linux machine, VPS, or old computer with internet access. No cost required if you use what you already have.
+            </div>
+
+            <h3 style="margin-top: 24px; margin-bottom: 12px; color: #58a6ff;">Step 1: Install VNC Server</h3>
+            <p class="instructions">
+                On your remote machine (Linux), run:
+            </p>
+            <div class="code-block">
+sudo apt update && sudo apt install tigervnc-standalone-server -y
+            </div>
+
+            <h3 style="margin-top: 24px; margin-bottom: 12px; color: #58a6ff;">Step 2: Start the VNC Server</h3>
+            <p class="instructions">
+                Create a VNC session:
+            </p>
+            <div class="code-block">
+vncserver :1 -geometry 1920x1080 -depth 24 -passwd
+            </div>
+            <p class="instructions" style="margin-top: 12px;">
+                This will prompt you to create a password. Remember it!
+            </p>
+
+            <h3 style="margin-top: 24px; margin-bottom: 12px; color: #58a6ff;">Step 3: Install WebSockify (Proxy)</h3>
+            <p class="instructions">
+                WebSockify converts VNC to WebSocket so your browser can connect:
+            </p>
+            <div class="code-block">
+sudo apt install python3-pip -y && pip3 install websockify
+            </div>
+
+            <h3 style="margin-top: 24px; margin-bottom: 12px; color: #58a6ff;">Step 4: Start WebSockify</h3>
+            <div class="code-block">
+websockify 6080 localhost:5901 --web=/usr/share/novnc/ &
+            </div>
+            <p class="instructions" style="margin-top: 12px;">
+                This listens on port 6080 and proxies to your VNC server at 5901.
+            </p>
+
+            <h3 style="margin-top: 24px; margin-bottom: 12px; color: #58a6ff;">Step 5: Open Firewall (if needed)</h3>
+            <div class="code-block">
+sudo ufw allow 6080/tcp
+            </div>
+
+            <h3 style="margin-top: 24px; margin-bottom: 12px; color: #58a6ff;">Step 6: Connect from Here</h3>
+            <p class="instructions">
+                <strong>Find your machine's IP:</strong>
+            </p>
+            <div class="code-block">
+hostname -I
+            </div>
+            <p class="instructions" style="margin-top: 12px;">
+                Then go to the <strong>Add VM</strong> tab and enter:
+            </p>
+            <ul style="margin-left: 20px; margin-bottom: 16px;">
+                <li><strong>WebSocket URL:</strong> <code style="background: #0d1117; padding: 2px 6px; border-radius: 2px;">ws://YOUR_IP:6080/</code></li>
+                <li><strong>VNC Password:</strong> The password you set in Step 2</li>
+            </ul>
+
+            <h3 style="margin-top: 24px; margin-bottom: 12px; color: #58a6ff;">Troubleshooting</h3>
+            <div class="instructions">
+                <ol>
+                    <li><strong>Connection refused?</strong> Check the VNC server is running: <code style="background: #0d1117; padding: 2px 6px; border-radius: 2px;">vncserver -list</code></li>
+                    <li><strong>Port already in use?</strong> Use a different display number: <code style="background: #0d1117; padding: 2px 6px; border-radius: 2px;">vncserver :2</code> (then websockify localhost:5902)</li>
+                    <li><strong>Black screen?</strong> Your remote machine needs a desktop environment (XFCE, GNOME, etc.)</li>
+                    <li><strong>Can't connect from outside network?</strong> You may need to port-forward 6080 on your router, or use a VPN.</li>
+                </ol>
+            </div>
+
+            <div class="alert alert-success" style="margin-top: 24px;">
+                <strong>✓ Ready!</strong> Once connected, you'll have full remote desktop access. You can then save multiple machines here and switch between them.
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- noVNC Connection Modal -->
+<div id="vncModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10000; flex-direction: column;">
+    <div style="background: #111318; padding: 12px; border-bottom: 1px solid #3d3d5c; display: flex; justify-content: space-between; align-items: center;">
+        <span id="vncTitle" style="color: #e6eef6; font-weight: 500;"></span>
+        <div style="display: flex; gap: 8px;">
+            <button class="secondary" onclick="toggleFullscreen()">⛶ Fullscreen</button>
+            <button class="danger" onclick="closeVNC()">✕ Close</button>
+        </div>
+    </div>
+    <div id="noVNC_screen" style="flex: 1; background: black;"></div>
+    <div style="background: #111318; padding: 8px; border-top: 1px solid #3d3d5c; color: #9fb4d5; font-size: 0.85rem;">
+        <span id="vncStatus">Connecting...</span>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@novnc/novnc/core/rfb.js"></script>
+
+<script>
+    const STORAGE_KEY = 'osai_vms_enhanced';
+
+    // Get all VMs from localStorage
+    function getVMs() {
+        try {
+            return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+        } catch (e) {
+            return [];
+        }
+    }
+
+    // Save VMs to localStorage
+    function saveVMs(vms) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(vms));
+    }
+
+    // Switch between tabs
+    function switchTab(tabName) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        
+        document.getElementById(tabName).classList.add('active');
+        event.target.classList.add('active');
+        
+        if (tabName === 'vms') renderVMs();
+    }
+
+    // Render all VMs
+    function renderVMs() {
+        const vms = getVMs();
+        const container = document.getElementById('vmList');
+        const empty = document.getElementById('emptyState');
+
+        if (vms.length === 0) {
+            container.innerHTML = '';
+            empty.style.display = 'block';
+            return;
+        }
+
+        empty.style.display = 'none';
+        container.innerHTML = vms.map(vm => `
+            <div class="vm-card">
+                <h3>${vm.name}</h3>
+                <div class="vm-info">
+                    <div><strong>OS:</strong> ${vm.os}</div>
+                    <div><strong>RAM:</strong> ${vm.ram || 'N/A'}</div>
+                    <div><strong>Storage:</strong> ${vm.storage || 'N/A'}</div>
+                    <div><strong>CPU:</strong> ${vm.cpu || 'N/A'}</div>
+                    <div><strong>WebSocket:</strong> <code style="background: #0d1117; padding: 2px 4px; border-radius: 2px; font-size: 0.75rem;">${vm.websocket}</code></div>
+                </div>
+                <div class="vm-actions">
+                    <button onclick="connectVM('${vm.id}')">🔗 Connect</button>
+                    <button class="secondary" onclick="editVM('${vm.id}')">✎ Edit</button>
+                    <button class="danger" onclick="deleteVM('${vm.id}')">🗑 Delete</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // Save new VM
+    function saveNewVM() {
+        const name = document.getElementById('vmName').value.trim();
+        const os = document.getElementById('vmOS').value;
+        const websocket = document.getElementById('vmWebSocket').value.trim();
+        const password = document.getElementById('vmPassword').value;
+        const ram = document.getElementById('vmRAM').value.trim();
+        const storage = document.getElementById('vmStorage').value.trim();
+        const cpu = document.getElementById('vmCPU').value.trim();
+
+        if (!name || !websocket) {
+            alert('VM Name and WebSocket URL are required!');
+            return;
+        }
+
+        const vms = getVMs();
+        const vm = {
+            id: 'vm_' + Date.now(),
+            name,
+            os,
+            websocket,
+            password,
+            ram,
+            storage,
+            cpu
+        };
+
+        vms.push(vm);
+        saveVMs(vms);
+        clearForm();
+        alert('VM saved! Go to "My VMs" to connect.');
+    }
+
+    // Clear form
+    function clearForm() {
+        document.getElementById('vmName').value = '';
+        document.getElementById('vmOS').value = 'linux';
+        document.getElementById('vmWebSocket').value = '';
+        document.getElementById('vmPassword').value = '';
+        document.getElementById('vmRAM').value = '';
+        document.getElementById('vmStorage').value = '';
+        document.getElementById('vmCPU').value = '';
+    }
+
+    // Delete VM
+    function deleteVM(id) {
+        if (!confirm('Delete this VM?')) return;
+        let vms = getVMs();
+        vms = vms.filter(vm => vm.id !== id);
+        saveVMs(vms);
+        renderVMs();
+    }
+
+    // Connect to VM via noVNC
+    let rfb = null;
+    function connectVM(id) {
+        const vm = getVMs().find(v => v.id === id);
+        if (!vm) return;
+
+        const modal = document.getElementById('vncModal');
+        const screen = document.getElementById('noVNC_screen');
+        const status = document.getElementById('vncStatus');
+        const title = document.getElementById('vncTitle');
+
+        modal.style.display = 'flex';
+        screen.innerHTML = '';
+        title.textContent = `${vm.name} - Remote Console`;
+        status.textContent = 'Connecting...';
+
+        try {
+            rfb = new RFB(screen, vm.websocket, {
+                credentials: { password: vm.password || '' }
+            });
+
+            rfb.addEventListener('connect', () => {
+                status.textContent = '✓ Connected';
+                if (rfb.scaleViewport) rfb.scaleViewport(true);
+            });
+
+            rfb.addEventListener('disconnect', () => {
+                status.textContent = '✗ Disconnected';
+            });
+
+            rfb.addEventListener('securityfailure', (e) => {
+                status.textContent = `✗ Security error: ${e.detail ? e.detail.reason : 'Unknown'}`;
+            });
+
+            rfb.addEventListener('credentialsrequired', () => {
+                status.textContent = '⚠ Password required';
+            });
+
+            window.addEventListener('resize', () => {
+                if (rfb && rfb.scaleViewport) rfb.scaleViewport(true);
+            });
+        } catch (err) {
+            status.textContent = `✗ Error: ${err.message}`;
+        }
+    }
+
+    function closeVNC() {
+        if (rfb) rfb.disconnect();
+        rfb = null;
+        document.getElementById('vncModal').style.display = 'none';
+    }
+
+    function toggleFullscreen() {
+        const screen = document.getElementById('noVNC_screen');
+        if (screen.requestFullscreen) {
+            screen.requestFullscreen();
+        } else if (screen.webkitRequestFullscreen) {
+            screen.webkitRequestFullscreen();
+        }
+    }
+
+    // Load sample VMs
+    function loadSampleVMs() {
+        const samples = [
+            {
+                id: 'vm_sample_1',
+                name: 'Sample Ubuntu Server',
+                os: 'linux',
+                websocket: 'ws://localhost:6080/',
+                password: '',
+                ram: '2 GB',
+                storage: '30 GB',
+                cpu: '2'
+            },
+            {
+                id: 'vm_sample_2',
+                name: 'Sample Windows 11',
+                os: 'windows',
+                websocket: 'ws://192.168.1.100:6080/',
+                password: 'change-me',
+                ram: '4 GB',
+                storage: '60 GB',
+                cpu: '4'
+            }
+        ];
+        saveVMs(samples);
+        renderVMs();
+        alert('Sample VMs loaded! Update them with your real WebSocket URLs.');
+    }
+
+    // Clear all VMs
+    function clearAllVMs() {
+        if (!confirm('Delete ALL VMs? This cannot be undone.')) return;
+        saveVMs([]);
+        renderVMs();
+    }
+
+    // Initial render
+    renderVMs();
+</script>
+
+</body>
+</html>
