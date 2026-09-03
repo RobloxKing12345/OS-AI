@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>OS AI Prototype 3.1 - noVNC Integration (branch: novnc-integration)</title>
+  <style>
+    *{box-sizing:border-box;font-family:system-ui}
+    body{margin:0;padding:16px;background:#0b0b0d;color:#e6eef6}
+    .vm-list{display:flex;gap:12px;flex-wrap:wrap}
+    .vm-card{background:#111;padding:12px;border-radius:8px;width:220px}
+    .vm-card h3{margin:0 0 8px 0}
+    .controls{margin-top:12px}
+    button{background:#2779bd;color:#fff;border:0;padding:8px 10px;border-radius:6px;cursor:pointer}
+    input{padding:6px;border-radius:6px;border:1px solid #222;background:#0b0b0d;color:#fff}
+    #log{margin-top:14px;color:#9fb4d5}
+    footer{margin-top:18px;font-size:0.9rem;color:#9fb4d5}
+  </style>
+</head>
+<body>
+  <h1>OS AI Prototype 3.1 — noVNC demo</h1>
+  <p>This file demonstrates how to connect a VM entry to a remote VNC websocket (noVNC). It reads VMs from localStorage key <code>osai_vms_31</code>.</p>
+
+  <div>
+    <button id="addSample">Add sample VM entries</button>
+    <button id="clear">Clear VMs</button>
+  </div>
+
+  <div class="vm-list" id="vmList" style="margin-top:12px"></div>
+
+  <div id="log"></div>
+
+  <footer>
+    Notes: This demo loads noVNC from CDN. websockify must proxy your VNC server (eg localhost:5901) to a websocket endpoint (eg ws://host:6080).
+  </footer>
+
+  <script>
+    const KEY = 'osai_vms_31';
+
+    function getVMs(){
+      try{ return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch(e){ return []; }
+    }
+    function saveVMs(v){ localStorage.setItem(KEY, JSON.stringify(v)); }
+
+    function renderList(){
+      const list = document.getElementById('vmList');
+      const vms = getVMs();
+      list.innerHTML = '';
+      if(!vms.length){ list.innerHTML = '<div style="color:#9fb4d5">No VMs saved. Add sample VMs.</div>'; return }
+      vms.forEach(vm => {
+        const el = document.createElement('div'); el.className = 'vm-card';
+        el.innerHTML = `
+          <h3>${vm.name || vm.id}</h3>
+          <div>OS: ${vm.os || 'unknown'}</div>
+          <div>Status: ${vm.status || 'stopped'}</div>
+          <div style="margin-top:8px" class="controls">
+            <button data-id="${vm.id}" class="start">Open Remote Console</button>
+          </div>
+        `;
+        list.appendChild(el);
+      });
+      // attach events
+      document.querySelectorAll('.start').forEach(btn=> btn.addEventListener('click', e => {
+        const id = e.currentTarget.getAttribute('data-id'); startVM(id);
+      }));
+    }
+
+    function startVM(id){
+      const vms = getVMs();
+      const vm = vms.find(x => x.id === id);
+      if(!vm){ log('VM not found: ' + id); return }
+      // in a real setup you might call an API to ensure the VM is running here
+      vm.status = 'running';
+      saveVMs(vms);
+      renderList();
+
+      // open the remote console window and write the noVNC client HTML into it
+      const w = window.open('', '_blank');
+      if(!w){ alert('Popup blocked. Allow popups for this site.'); return }
+      w.document.open();
+      w.document.write(vmWindow(vm));
+      w.document.close();
+    }
+
+    function vmWindow(vm){
+      // Build websocket URL: prefer vm.vnc_ws, else build from host/port
+      let wsUrl = vm.vnc_ws;
+      if(!wsUrl){
+        const proto = (location.protocol === 'https:') ? 'wss' : 'ws';
+        const host = vm.vnc_host || location.hostname;
+        const port = vm.vnc_port || 6080;
+        const path = vm.vnc_path || '/';
+        wsUrl = `${proto}://${host}:${port}${path}`;
+      }
+
+      // If user stored a VNC password in vm.vnc_password (not recommended), it will be used.
+      const password = vm.vnc_password || '';
+
+      // Escape the wsUrl and password into the string safely via JSON.stringify
+      return `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>${escapeHtml(vm.name || vm.id)} — Remote Console</title>
+  <style>html,body{height:100%;margin:0;background:#000;color:#fff;font-family:system-ui}#controls{height:44px;display:flex;align-items:center;gap:8px;padding:6px;background:#111}#noVNC_screen{height:calc(100vh - 44px);width:100%;background:#000}</style>
+</head>
+<body>
+  <div id="controls">
+    <button id="btnCAD">Send Ctrl+Alt+Del</button>
+    <button id="btnFS">Fullscreen</button>
+    <label style="margin-left:8px">Password: <input id="vncPass" type="password" /></label>
+    <div id="status" style="margin-left:8px;color:#ccc">connecting…</div>
+  </div>
+  <div id="noVNC_screen"></div>
+
+  <!-- noVNC RFB client from CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@novnc/novnc/core/rfb.js"></script>
+  <script>
+    (function(){
+      const ws = ${JSON.stringify(wsUrl)};
+      let password = ${JSON.stringify(password)};
+      const screen = document.getElementById('noVNC_screen');
+      const statusEl = document.getElementById('status');
+      const btnCAD = document.getElementById('btnCAD');
+      const btnFS = document.getElementById('btnFS');
+      const passInput = document.getElementById('vncPass');
+
+      function updateStatus(s){ statusEl.textContent = s; }
+
+      let rfb = null;
+      function connect(){
+        try{
+          rfb = new RFB(screen, ws, { credentials: { password: password } });
+          rfb.addEventListener('connect', ()=> updateStatus('connected'));
+          rfb.addEventListener('disconnect', ()=> updateStatus('disconnected'));
+          rfb.addEventListener('securityfailure', e => updateStatus('security failure: ' + (e.detail ? e.detail.reason : '')));
+          rfb.addEventListener('credentialsrequired', ()=> updateStatus('password required — enter it and press Enter'));
+
+          // scale viewport to fit
+          if(rfb && rfb.scaleViewport) rfb.scaleViewport(true);
+          window.addEventListener('resize', ()=> { try{ rfb.scaleViewport(true); }catch(e){} });
+        }catch(err){ updateStatus('connection error: ' + err); }
+      }
+
+      function reconnectWithPassword(){
+        password = passInput.value || '';
+        try{ if(rfb) rfb.disconnect(); }catch(e){}
+        rfb = null;
+        updateStatus('connecting…');
+        connect();
+      }
+
+      btnCAD.addEventListener('click', ()=> { if(rfb) rfb.sendCtrlAltDel(); });
+      btnFS.addEventListener('click', ()=> { if(screen.requestFullscreen) screen.requestFullscreen(); else if(screen.webkitRequestFullscreen) screen.webkitRequestFullscreen(); });
+      passInput.addEventListener('keyup', (e)=> { if(e.key === 'Enter') reconnectWithPassword(); });
+
+      // try connect initially
+      connect();
+      window.addEventListener('beforeunload', ()=> { try{ if(rfb) rfb.disconnect(); }catch(e){} });
+    })();
+  </script>
+</body>
+</html>`;
+    }
+
+    function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+    function log(t){ document.getElementById('log').textContent = t }
+
+    // UI actions
+    document.getElementById('addSample').addEventListener('click', ()=>{
+      const sample = [
+        { id: 'vm-ubuntu', name: 'Ubuntu Test', os: 'linux', status: 'stopped', vnc_host: location.hostname, vnc_port: 6080 },
+        { id: 'vm-windows', name: 'Windows Test', os: 'windows', status: 'stopped', vnc_ws: `ws://${location.hostname}:6080/` }
+      ];
+      saveVMs(sample);
+      renderList();
+      log('Added sample VMs. Update vnc_host / vnc_ws to point to your websockify endpoint.');
+    });
+
+    document.getElementById('clear').addEventListener('click', ()=>{ localStorage.removeItem(KEY); renderList(); log('Cleared VMs'); });
+
+    // initial render
+    renderList();
+  </script>
+</body>
+</html>
