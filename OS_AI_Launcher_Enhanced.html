@@ -40,6 +40,7 @@
             gap: 0;
             margin-bottom: 30px;
             border-bottom: 2px solid #3d3d5c;
+            overflow-x: auto;
         }
 
         .tab-btn {
@@ -51,6 +52,7 @@
             font-size: 0.95rem;
             border-bottom: 3px solid transparent;
             transition: all 0.2s;
+            white-space: nowrap;
         }
 
         .tab-btn.active {
@@ -81,6 +83,13 @@
         .section h2 {
             font-size: 1.3rem;
             margin-bottom: 16px;
+            color: #58a6ff;
+        }
+
+        .section h3 {
+            font-size: 1.1rem;
+            margin-top: 24px;
+            margin-bottom: 12px;
             color: #58a6ff;
         }
 
@@ -225,6 +234,12 @@
             border: 1px solid #238636;
         }
 
+        .alert-warning {
+            background: #7a4700;
+            color: #f0883e;
+            border: 1px solid #d99e02;
+        }
+
         .alert-error {
             background: #5a1a1a;
             color: #f85149;
@@ -241,6 +256,7 @@
             overflow-x: auto;
             margin: 12px 0;
             color: #79c0ff;
+            line-height: 1.4;
         }
 
         .instructions {
@@ -248,7 +264,7 @@
             color: #c9d1d9;
         }
 
-        .instructions ol {
+        .instructions ol, .instructions ul {
             margin-left: 20px;
             margin-bottom: 16px;
         }
@@ -271,6 +287,13 @@
             font-size: 3rem;
             margin-bottom: 16px;
         }
+
+        .tab-description {
+            font-size: 0.9rem;
+            color: #9fb4d5;
+            margin-bottom: 16px;
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
@@ -283,6 +306,7 @@
         <button class="tab-btn active" onclick="switchTab('vms')">My VMs</button>
         <button class="tab-btn" onclick="switchTab('add')">Add VM</button>
         <button class="tab-btn" onclick="switchTab('setup')">Setup Guide</button>
+        <button class="tab-btn" onclick="switchTab('chromeos')">ChromeOS Setup</button>
     </div>
 
     <!-- VMs Tab -->
@@ -356,13 +380,13 @@
     <!-- Setup Guide Tab -->
     <div id="setup" class="tab-content">
         <div class="section">
-            <h2>🚀 How to Set Up Your Remote Desktop</h2>
+            <h2>🚀 How to Set Up Your Remote Desktop (Linux/VPS)</h2>
             
             <div class="alert alert-info">
                 <strong>What you need:</strong> A Linux machine, VPS, or old computer with internet access. No cost required if you use what you already have.
             </div>
 
-            <h3 style="margin-top: 24px; margin-bottom: 12px; color: #58a6ff;">Step 1: Install VNC Server</h3>
+            <h3>Step 1: Install VNC Server</h3>
             <p class="instructions">
                 On your remote machine (Linux), run:
             </p>
@@ -370,7 +394,7 @@
 sudo apt update && sudo apt install tigervnc-standalone-server -y
             </div>
 
-            <h3 style="margin-top: 24px; margin-bottom: 12px; color: #58a6ff;">Step 2: Start the VNC Server</h3>
+            <h3>Step 2: Start the VNC Server</h3>
             <p class="instructions">
                 Create a VNC session:
             </p>
@@ -381,7 +405,7 @@ vncserver :1 -geometry 1920x1080 -depth 24 -passwd
                 This will prompt you to create a password. Remember it!
             </p>
 
-            <h3 style="margin-top: 24px; margin-bottom: 12px; color: #58a6ff;">Step 3: Install WebSockify (Proxy)</h3>
+            <h3>Step 3: Install WebSockify (Proxy)</h3>
             <p class="instructions">
                 WebSockify converts VNC to WebSocket so your browser can connect:
             </p>
@@ -389,7 +413,7 @@ vncserver :1 -geometry 1920x1080 -depth 24 -passwd
 sudo apt install python3-pip -y && pip3 install websockify
             </div>
 
-            <h3 style="margin-top: 24px; margin-bottom: 12px; color: #58a6ff;">Step 4: Start WebSockify</h3>
+            <h3>Step 4: Start WebSockify</h3>
             <div class="code-block">
 websockify 6080 localhost:5901 --web=/usr/share/novnc/ &
             </div>
@@ -397,12 +421,12 @@ websockify 6080 localhost:5901 --web=/usr/share/novnc/ &
                 This listens on port 6080 and proxies to your VNC server at 5901.
             </p>
 
-            <h3 style="margin-top: 24px; margin-bottom: 12px; color: #58a6ff;">Step 5: Open Firewall (if needed)</h3>
+            <h3>Step 5: Open Firewall (if needed)</h3>
             <div class="code-block">
 sudo ufw allow 6080/tcp
             </div>
 
-            <h3 style="margin-top: 24px; margin-bottom: 12px; color: #58a6ff;">Step 6: Connect from Here</h3>
+            <h3>Step 6: Connect from Here</h3>
             <p class="instructions">
                 <strong>Find your machine's IP:</strong>
             </p>
@@ -417,11 +441,11 @@ hostname -I
                 <li><strong>VNC Password:</strong> The password you set in Step 2</li>
             </ul>
 
-            <h3 style="margin-top: 24px; margin-bottom: 12px; color: #58a6ff;">Troubleshooting</h3>
+            <h3>Troubleshooting</h3>
             <div class="instructions">
                 <ol>
                     <li><strong>Connection refused?</strong> Check the VNC server is running: <code style="background: #0d1117; padding: 2px 6px; border-radius: 2px;">vncserver -list</code></li>
-                    <li><strong>Port already in use?</strong> Use a different display number: <code style="background: #0d1117; padding: 2px 6px; border-radius: 2px;">vncserver :2</code> (then websockify localhost:5902)</li>
+                    <li><strong>Port already in use?</strong> Use a different display number: <code style="background: #0d1117; padding: 2px 6px; border-radius: 2px;">vncserver :2</code></li>
                     <li><strong>Black screen?</strong> Your remote machine needs a desktop environment (XFCE, GNOME, etc.)</li>
                     <li><strong>Can't connect from outside network?</strong> You may need to port-forward 6080 on your router, or use a VPN.</li>
                 </ol>
@@ -429,6 +453,116 @@ hostname -I
 
             <div class="alert alert-success" style="margin-top: 24px;">
                 <strong>✓ Ready!</strong> Once connected, you'll have full remote desktop access. You can then save multiple machines here and switch between them.
+            </div>
+        </div>
+    </div>
+
+    <!-- ChromeOS + Crostini Setup Tab -->
+    <div id="chromeos" class="tab-content">
+        <div class="section">
+            <h2>🍎 ChromeOS + Crostini Setup Guide</h2>
+            
+            <div class="alert alert-info">
+                <strong>For ChromeOS users:</strong> If you have Crostini (Linux container) enabled, you can set up a local VNC server on your Chromebook. Another user on your device might have it—ask them to help!
+            </div>
+
+            <h3>Prerequisites</h3>
+            <p class="instructions">
+                You need <strong>Crostini (Linux on ChromeOS)</strong> enabled on your Chromebook. This usually comes pre-installed on newer models.
+            </p>
+            <ul style="margin-left: 20px; margin-bottom: 16px;">
+                <li>Open the <strong>Terminal</strong> app on your Chromebook</li>
+                <li>If it opens a Linux terminal, you're good!</li>
+                <li>If you see an error, Crostini isn't set up—ask the other user to enable it</li>
+            </ul>
+
+            <div class="alert alert-warning">
+                <strong>⚠️ Important:</strong> These commands must be run by the user who has Crostini enabled. If that's not you, have that user follow these steps and share the WebSocket URL with you.
+            </div>
+
+            <h3>Step 1: Install VNC Server (in Crostini Terminal)</h3>
+            <p class="instructions">
+                The user with Crostini runs:
+            </p>
+            <div class="code-block">
+sudo apt update && sudo apt install tigervnc-standalone-server -y
+            </div>
+
+            <h3>Step 2: Start VNC Server</h3>
+            <p class="instructions">
+                Still in the Crostini terminal:
+            </p>
+            <div class="code-block">
+vncserver :1 -geometry 1920x1080 -depth 24 -passwd
+            </div>
+            <p class="instructions" style="margin-top: 12px;">
+                You'll be prompted to create a password. <strong>Write this down!</strong>
+            </p>
+
+            <h3>Step 3: Install WebSockify</h3>
+            <div class="code-block">
+sudo apt install python3-pip -y && pip3 install websockify
+            </div>
+
+            <h3>Step 4: Start WebSockify</h3>
+            <div class="code-block">
+websockify 6080 localhost:5901 --web=/usr/share/novnc/ &
+            </div>
+            <p class="instructions" style="margin-top: 12px;">
+                The <code>&</code> at the end runs it in the background. Leave this terminal open.
+            </p>
+
+            <h3>Step 5: Get the IP Address</h3>
+            <p class="instructions">
+                In the same terminal, type:
+            </p>
+            <div class="code-block">
+hostname -I
+            </div>
+            <p class="instructions" style="margin-top: 12px;">
+                You'll see something like <code>127.0.0.1</code> or an IP like <code>192.168.1.100</code>
+            </p>
+
+            <h3>Step 6: Add to This Launcher (Your Account)</h3>
+            <p class="instructions">
+                Now switch to <strong>your user account</strong> and open this launcher. Go to the <strong>"Add VM"</strong> tab:
+            </p>
+            <ul style="margin-left: 20px; margin-bottom: 16px;">
+                <li><strong>VM Name:</strong> Shared Crostini VM (or whatever you want)</li>
+                <li><strong>OS:</strong> Linux</li>
+                <li><strong>WebSocket URL:</strong> <code style="background: #0d1117; padding: 2px 6px; border-radius: 2px;">ws://localhost:6080/</code> (if same device) OR <code style="background: #0d1117; padding: 2px 6px; border-radius: 2px;">ws://[IP]:6080/</code> (replace [IP] with the number from Step 5)</li>
+                <li><strong>VNC Password:</strong> The password from Step 2</li>
+                <li><strong>RAM:</strong> 2 GB (or more if available)</li>
+                <li><strong>Storage:</strong> N/A for Crostini</li>
+                <li><strong>CPU:</strong> 2 (or more)</li>
+            </ul>
+            <p class="instructions">
+                Click <strong>Save VM</strong>. Done! You can now connect whenever you want.
+            </p>
+
+            <h3>Keeping It Running</h3>
+            <p class="instructions">
+                <strong>Important:</strong> The other user needs to keep their Crostini terminal open with WebSockify running. If they close it, the connection won't work.
+            </p>
+            <p class="instructions" style="margin-top: 12px;">
+                To check if it's still running, they can type:
+            </p>
+            <div class="code-block">
+ps aux | grep websockify
+            </div>
+
+            <h3>Troubleshooting</h3>
+            <div class="instructions">
+                <ol>
+                    <li><strong>WebSocket URL not working?</strong> Make sure the Crostini terminal with WebSockify is still open</li>
+                    <li><strong>Wrong password?</strong> The VNC server might need to be restarted: <code style="background: #0d1117; padding: 2px 6px; border-radius: 2px;">vncserver -kill :1</code> then run the start command again</li>
+                    <li><strong>Black screen?</strong> Crostini might need a desktop environment. Try: <code style="background: #0d1117; padding: 2px 6px; border-radius: 2px;">sudo apt install xfce4 -y</code></li>
+                    <li><strong>Permission denied?</strong> Add <code style="background: #0d1117; padding: 2px 6px; border-radius: 2px;">sudo</code> before commands if you get errors</li>
+                </ol>
+            </div>
+
+            <div class="alert alert-success" style="margin-top: 24px;">
+                <strong>✓ All Set!</strong> You now have remote desktop access to the shared Crostini Linux environment. Go to "My VMs" and click Connect!
             </div>
         </div>
     </div>
