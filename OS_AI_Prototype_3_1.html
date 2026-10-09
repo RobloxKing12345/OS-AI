@@ -70,7 +70,7 @@ const OS = [
  {id:'android',name:'Android',icon:'🤖',ram:'3 GB',storage:'24 GB',cpu:'2 cores',supported:true}
 ];
 const KEY='osai_vms_31', MEM='osai_memory_31', ISO_KEY='osai_iso_slots_31', HIDDEN_KEY='osai_hidden_vms_31', AUTO_KEY='osai_auto_plan_31';
-const API='';
+const API='http://127.0.0.1:8765';
 let backendVMs={};
 function readJSON(key,fallback){try{const value=JSON.parse(localStorage.getItem(key)||'null');return value===null?fallback:value}catch(_){return fallback}}
 function getVMs(){const v=readJSON(KEY,[]);return Array.isArray(v)?v:[]}
